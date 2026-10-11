@@ -1,4 +1,4 @@
-export type DataStatus = 'LIVE' | 'DELAYED' | 'CACHED' | 'SIMULATED' | 'ERROR';
+export type DataStatus = 'LIVE' | 'DELAYED' | 'CACHED' | 'SIMULATED' | 'STALE' | 'UNAVAILABLE' | 'ERROR';
 
 export interface MarketIndex {
   symbol: string;

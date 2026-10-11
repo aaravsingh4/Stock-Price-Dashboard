@@ -20,6 +20,7 @@ import {
 } from './services/mockMarketData';
 import { RefreshCw } from 'lucide-react';
 import { Button } from './components/ui/Button';
+import { marketApiClient } from './services/apiClient';
 
 export function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -32,6 +33,7 @@ export function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isLiveProviderActive, setIsLiveProviderActive] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -41,6 +43,29 @@ export function AppContent() {
       setIndices(data.indices);
       setStocks(data.stocks);
       setStats(data.stats);
+
+      // Probe backend gateway and Finnhub provider status
+      const health = await marketApiClient.checkHealth();
+      if (health?.provider?.configured) {
+        setIsLiveProviderActive(true);
+        const initialQuote = await marketApiClient.fetchQuote(INITIAL_STOCKS[0].symbol);
+        if (initialQuote) {
+          const enriched: StockQuote = {
+            ...INITIAL_STOCKS[0],
+            price: initialQuote.price,
+            change: initialQuote.change,
+            changePercent: initialQuote.changePercent,
+            open: initialQuote.open,
+            dayHigh: initialQuote.high,
+            dayLow: initialQuote.low,
+            previousClose: initialQuote.previousClose,
+            dataStatus: initialQuote.dataStatus.toUpperCase() as import('./types/stock').DataStatus,
+            lastUpdated: initialQuote.timestamp,
+          };
+          setSelectedStockForChart(enriched);
+          setStocks((prev) => prev.map((s) => (s.symbol === enriched.symbol ? enriched : s)));
+        }
+      }
     } catch {
       setHasError(true);
     } finally {
@@ -61,9 +86,39 @@ export function AppContent() {
     }
   };
 
-  const handleStockSelect = (stock: StockQuote) => {
+  const handleStockSelect = async (stock: StockQuote) => {
     setSelectedStock(stock);
     setSelectedStockForChart(stock);
+
+    if (isLiveProviderActive) {
+      const liveQuote = await marketApiClient.fetchQuote(stock.symbol);
+      if (liveQuote) {
+        const enriched: StockQuote = {
+          ...stock,
+          price: liveQuote.price,
+          change: liveQuote.change,
+          changePercent: liveQuote.changePercent,
+          open: liveQuote.open,
+          dayHigh: liveQuote.high,
+          dayLow: liveQuote.low,
+          previousClose: liveQuote.previousClose,
+          dataStatus: liveQuote.dataStatus.toUpperCase() as import('./types/stock').DataStatus,
+          lastUpdated: liveQuote.timestamp,
+        };
+        setSelectedStock(enriched);
+        setSelectedStockForChart(enriched);
+        setStocks((prev) => prev.map((s) => (s.symbol === stock.symbol ? enriched : s)));
+      } else {
+        // If live quote request failed or unavailable, mark with honest UNAVAILABLE status without faking data
+        const unavailable: StockQuote = {
+          ...stock,
+          dataStatus: 'UNAVAILABLE',
+        };
+        setSelectedStock(unavailable);
+        setSelectedStockForChart(unavailable);
+        setStocks((prev) => prev.map((s) => (s.symbol === stock.symbol ? unavailable : s)));
+      }
+    }
   };
 
   return (
@@ -77,7 +132,7 @@ export function AppContent() {
       onSelectStock={handleStockSelect}
     >
       {/* Simulation Notice Banner */}
-      <SimulationNotice />
+      <SimulationNotice isLiveProviderActive={isLiveProviderActive} />
 
       {/* Main Tab Routing Content */}
       {activeTab === 'dashboard' && (

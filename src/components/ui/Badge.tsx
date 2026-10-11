@@ -33,6 +33,18 @@ export function DataStatusBadge({ status, className }: DataStatusBadgeProps) {
       dot: 'bg-indigo-500',
       label: 'SIMULATED',
     },
+    STALE: {
+      bg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/50',
+      text: 'text-amber-700 dark:text-amber-400',
+      dot: 'bg-amber-400',
+      label: 'STALE',
+    },
+    UNAVAILABLE: {
+      bg: 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700',
+      text: 'text-slate-600 dark:text-slate-400',
+      dot: 'bg-slate-400',
+      label: 'UNAVAILABLE',
+    },
     ERROR: {
       bg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/50',
       text: 'text-rose-700 dark:text-rose-400',

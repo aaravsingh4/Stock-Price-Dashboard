@@ -11,16 +11,14 @@ import { EmptyState } from './components/ui/EmptyState';
 import { MarketIndex, MarketOverviewStats, StockQuote, TimeRange } from './types/stock';
 import { StockChart } from './components/dashboard/StockChart';
 import { MarketMovers } from './components/dashboard/MarketMovers';
+import { StockDetailModal } from './components/dashboard/StockDetailModal';
 import {
   fetchSimulatedMarketData,
   INITIAL_MARKET_INDICES,
   INITIAL_MARKET_STATS,
   INITIAL_STOCKS,
 } from './services/mockMarketData';
-import { Card, CardHeader, CardTitle, CardContent } from './components/ui/Card';
-import { formatCurrency, formatPercent } from './utils/formatters';
-import { TrendBadge, DataStatusBadge } from './components/ui/Badge';
-import { X, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from './components/ui/Button';
 
 export function AppContent() {
@@ -155,89 +153,13 @@ export function AppContent() {
             </>
           )}
 
-          {/* Quick Stock Detail Preview Modal / Drawer */}
+          {/* Stock Detail Modal / Drawer */}
           {selectedStock && (
-            <div
-              className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
-              onClick={() => setSelectedStock(null)}
-            >
-              <Card
-                className="w-full max-w-lg p-0 shadow-elevated border-slate-300 dark:border-surface-darkBorder animate-in fade-in zoom-in-95 duration-150"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <CardHeader className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <CardTitle className="text-base">{selectedStock.symbol}</CardTitle>
-                    <span className="text-xs text-slate-500">{selectedStock.companyName}</span>
-                    <DataStatusBadge status={selectedStock.dataStatus} />
-                  </div>
-                  <button
-                    onClick={() => setSelectedStock(null)}
-                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-baseline justify-between border-b border-slate-100 dark:border-surface-darkBorder pb-4">
-                    <div>
-                      <div className="text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
-                        {formatCurrency(selectedStock.price)}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5">
-                        Previous Close: {formatCurrency(selectedStock.previousClose)}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <TrendBadge
-                        value={selectedStock.changePercent}
-                        formattedText={formatPercent(selectedStock.changePercent)}
-                      />
-                      <div className="text-xs font-semibold tabular-nums mt-1 text-slate-600 dark:text-slate-300">
-                        {selectedStock.change >= 0 ? `+${selectedStock.change.toFixed(2)}` : selectedStock.change.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-surface-darkBorder">
-                      <div className="text-slate-400 text-[11px]">Day Range</div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 tabular-nums mt-0.5">
-                        {formatCurrency(selectedStock.dayLow)} – {formatCurrency(selectedStock.dayHigh)}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-surface-darkBorder">
-                      <div className="text-slate-400 text-[11px]">Open Price</div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 tabular-nums mt-0.5">
-                        {formatCurrency(selectedStock.open)}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-surface-darkBorder">
-                      <div className="text-slate-400 text-[11px]">P/E Ratio</div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 tabular-nums mt-0.5">
-                        {selectedStock.peRatio ?? 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-surface-darkBorder">
-                      <div className="text-slate-400 text-[11px]">Sector</div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
-                        {selectedStock.sector}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex justify-end">
-                    <Button
-                      variant={selectedStock.isWatchlisted ? 'secondary' : 'primary'}
-                      size="sm"
-                      onClick={() => handleToggleWatchlist(selectedStock.symbol)}
-                    >
-                      {selectedStock.isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <StockDetailModal
+              stock={selectedStock}
+              onClose={() => setSelectedStock(null)}
+              onToggleWatchlist={handleToggleWatchlist}
+            />
           )}
         </div>
       )}

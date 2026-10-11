@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Activity,
   Bell,
@@ -14,12 +14,14 @@ import {
   X,
   BellRing,
   Settings,
+  Loader2,
 } from 'lucide-react';
 import { useTheme } from '../../context/themeCore';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { StockQuote } from '../../types/stock';
 import { TrendBadge } from '../ui/Badge';
 import { cn } from '../../utils/cn';
+import { marketApiClient, LiveSearchResultItem } from '../../services/apiClient';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -44,7 +46,11 @@ export function Header({
 }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [liveSearchResults, setLiveSearchResults] = useState<LiveSearchResultItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchRequestIdRef = useRef<number>(0);
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -55,7 +61,41 @@ export function Header({
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  // Quick search results
+  // Debounced live symbol search against backend
+  useEffect(() => {
+    const cleanQuery = searchQuery.trim();
+    if (!cleanQuery || cleanQuery.length < 2) {
+      setLiveSearchResults([]);
+      setIsSearching(false);
+      setSelectedIndex(-1);
+      return;
+    }
+
+    const currentReqId = ++searchRequestIdRef.current;
+    setIsSearching(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const results = await marketApiClient.searchSymbols(cleanQuery);
+        if (searchRequestIdRef.current === currentReqId) {
+          setLiveSearchResults(results);
+          setSelectedIndex(-1);
+        }
+      } catch {
+        if (searchRequestIdRef.current === currentReqId) {
+          setLiveSearchResults([]);
+        }
+      } finally {
+        if (searchRequestIdRef.current === currentReqId) {
+          setIsSearching(false);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Combined matching results: merge live results with local catalog
   const matchingStocks = searchQuery.trim()
     ? stocks
         .filter(
@@ -65,6 +105,45 @@ export function Header({
         )
         .slice(0, 5)
     : [];
+
+  // Deduplicate remote results not already in matching local stocks
+  const remoteExtraResults = liveSearchResults.filter(
+    (r) => !stocks.some((s) => s.symbol.toUpperCase() === r.symbol.toUpperCase())
+  );
+
+  const totalResultsCount = matchingStocks.length + remoteExtraResults.length;
+
+  const handleSelectRemote = useCallback((item: LiveSearchResultItem) => {
+    const syntheticStock: StockQuote = {
+      symbol: item.symbol,
+      companyName: item.description || item.displaySymbol || item.symbol,
+      price: 0,
+      change: 0,
+      changePercent: 0,
+      open: 0,
+      dayHigh: 0,
+      dayLow: 0,
+      previousClose: 0,
+      volume: 0,
+      marketCap: 0,
+      sector: item.type || 'Equities',
+      isWatchlisted: false,
+      dataStatus: 'LIVE',
+      lastUpdated: new Date().toISOString(),
+    };
+    onSelectStock?.(syntheticStock);
+    setIsSearchFocused(false);
+  }, [onSelectStock]);
+
+  const handleSelectIndex = (index: number) => {
+    if (index >= 0 && index < matchingStocks.length) {
+      onSelectStock?.(matchingStocks[index]);
+      setIsSearchFocused(false);
+    } else if (index >= matchingStocks.length && index < totalResultsCount) {
+      const remoteItem = remoteExtraResults[index - matchingStocks.length];
+      if (remoteItem) handleSelectRemote(remoteItem);
+    }
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -128,16 +207,51 @@ export function Header({
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
+                role="combobox"
+                aria-expanded={isSearchFocused && (totalResultsCount > 0 || isSearching)}
+                aria-autocomplete="list"
+                aria-haspopup="listbox"
+                aria-label="Search stocks, indices, companies"
                 placeholder="Search stocks, indices, companies (e.g. AAPL, NVDA)..."
                 value={searchQuery}
                 onFocus={() => setIsSearchFocused(true)}
                 onChange={(e) => onSearchChange?.(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (totalResultsCount > 0) {
+                      setSelectedIndex((prev) => (prev + 1) % totalResultsCount);
+                    }
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (totalResultsCount > 0) {
+                      setSelectedIndex((prev) => (prev <= 0 ? totalResultsCount - 1 : prev - 1));
+                    }
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && selectedIndex < totalResultsCount) {
+                      handleSelectIndex(selectedIndex);
+                    } else if (totalResultsCount > 0) {
+                      handleSelectIndex(0);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsSearchFocused(false);
+                  }
+                }}
                 className="w-full pl-10 pr-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-surface-darkBorder bg-slate-50/70 hover:bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald transition-all"
               />
-              {searchQuery ? (
+              {isSearching ? (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-emerald dark:text-emerald-400" />
+                </div>
+              ) : searchQuery ? (
                 <button
                   type="button"
-                  onClick={() => onSearchChange?.('')}
+                  onClick={() => {
+                    onSearchChange?.('');
+                    setLiveSearchResults([]);
+                    setIsSearchFocused(false);
+                  }}
                   aria-label="Clear search query"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
@@ -151,41 +265,122 @@ export function Header({
             </div>
 
             {/* Quick Autocomplete Dropdown */}
-            {isSearchFocused && matchingStocks.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-surface-darkCard border border-slate-200/90 dark:border-surface-darkBorder rounded-xl shadow-dropdown overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-surface-darkBorder">
-                  Stocks & Equities
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-surface-darkBorder/60">
-                  {matchingStocks.map((stock) => (
-                    <div
-                      key={stock.symbol}
-                      onClick={() => {
-                        onSelectStock?.(stock);
-                        setIsSearchFocused(false);
-                      }}
-                      className="px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
-                    >
+            {isSearchFocused && searchQuery.trim().length > 0 && (
+              <div 
+                role="listbox" 
+                className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-surface-darkCard border border-slate-200/90 dark:border-surface-darkBorder rounded-xl shadow-dropdown overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100"
+              >
+                {isSearching && totalResultsCount === 0 ? (
+                  <div className="px-3.5 py-4 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-emerald" />
+                    <span>Searching Finnhub securities...</span>
+                  </div>
+                ) : totalResultsCount === 0 ? (
+                  <div className="px-3.5 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                    No matching securities found for <strong className="text-slate-700 dark:text-slate-200 font-semibold">"{searchQuery}"</strong>
+                  </div>
+                ) : (
+                  <>
+                    {matchingStocks.length > 0 && (
                       <div>
-                        <div className="text-xs font-bold text-slate-900 dark:text-white">
-                          {stock.symbol}
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-surface-darkBorder bg-slate-50/50 dark:bg-slate-900/30">
+                          Primary Equities
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">
-                          {stock.companyName}
+                        <div className="divide-y divide-slate-100 dark:divide-surface-darkBorder/60">
+                          {matchingStocks.map((stock, idx) => {
+                            const isHighlighted = selectedIndex === idx;
+                            return (
+                              <div
+                                key={stock.symbol}
+                                role="option"
+                                aria-selected={isHighlighted}
+                                onClick={() => {
+                                  onSelectStock?.(stock);
+                                  setIsSearchFocused(false);
+                                }}
+                                className={cn(
+                                  'px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors',
+                                  isHighlighted
+                                    ? 'bg-slate-100 dark:bg-slate-800'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                )}
+                              >
+                                <div>
+                                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <span>{stock.symbol}</span>
+                                    <span className="text-[10px] font-normal px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                      {stock.sector}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                                    {stock.companyName}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
+                                    {formatCurrency(stock.price)}
+                                  </div>
+                                  <TrendBadge
+                                    value={stock.changePercent}
+                                    formattedText={formatPercent(stock.changePercent)}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs font-semibold text-slate-900 dark:text-white tabular-nums">
-                          {formatCurrency(stock.price)}
+                    )}
+
+                    {remoteExtraResults.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-t border-slate-100 dark:border-surface-darkBorder bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between">
+                          <span>Live Catalog Discovery</span>
+                          <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400">Finnhub</span>
                         </div>
-                        <TrendBadge
-                          value={stock.changePercent}
-                          formattedText={formatPercent(stock.changePercent)}
-                        />
+                        <div className="divide-y divide-slate-100 dark:divide-surface-darkBorder/60">
+                          {remoteExtraResults.map((item, idx) => {
+                            const globalIdx = matchingStocks.length + idx;
+                            const isHighlighted = selectedIndex === globalIdx;
+                            return (
+                              <div
+                                key={item.symbol}
+                                role="option"
+                                aria-selected={isHighlighted}
+                                onClick={() => handleSelectRemote(item)}
+                                className={cn(
+                                  'px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors',
+                                  isHighlighted
+                                    ? 'bg-slate-100 dark:bg-slate-800'
+                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                )}
+                              >
+                                <div>
+                                  <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <span>{item.symbol}</span>
+                                    {item.type && (
+                                      <span className="text-[10px] font-normal px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        {item.type}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                                    {item.description}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/50 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">
+                                    Select
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,14 +13,15 @@ import {
   type ScriptableContext,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { StockQuote, TimeRange } from '../../types/stock';
+import { StockHistoricalData, StockQuote, TimeRange } from '../../types/stock';
 import { generateHistoricalData } from '../../services/mockMarketData';
 import { Card, CardContent } from '../ui/Card';
 import { TrendBadge, DataStatusBadge } from '../ui/Badge';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { useTheme } from '../../context/themeCore';
-import { Star } from 'lucide-react';
+import { Star, Loader2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { marketApiClient } from '../../services/apiClient';
 
 // Register Chart.js components
 ChartJS.register(
@@ -53,6 +54,10 @@ export function StockChart({
 }: StockChartProps) {
   const { theme } = useTheme();
   const [internalTimeRange, setInternalTimeRange] = useState<TimeRange>('1M');
+  const [liveSeries, setLiveSeries] = useState<StockHistoricalData | null>(null);
+  const [isCandlesLoading, setIsCandlesLoading] = useState(false);
+  const [hasCandleError, setHasCandleError] = useState(false);
+  const activeRequestRef = useRef<string>('');
 
   const activeRange = externalTimeRange || internalTimeRange;
   const handleRangeSelect = (range: TimeRange) => {
@@ -63,10 +68,57 @@ export function StockChart({
     }
   };
 
-  // Generate deterministic chart series for selected stock & range
-  const chartSeries = useMemo(() => {
+  // Asynchronously fetch live candles when stock is provider-backed or gateway is active
+  useEffect(() => {
+    const requestId = `${stock.symbol}:${activeRange}:${Date.now()}`;
+    activeRequestRef.current = requestId;
+
+    // If stock has explicit simulated badge, retain deterministic simulation without network spam
+    if (stock.dataStatus === 'SIMULATED') {
+      setLiveSeries(null);
+      setIsCandlesLoading(false);
+      setHasCandleError(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCandlesLoading(true);
+    setHasCandleError(false);
+
+    marketApiClient
+      .fetchCandles(stock.symbol, activeRange)
+      .then((data) => {
+        if (!isMounted || activeRequestRef.current !== requestId) return;
+        if (data && data.points && data.points.length > 0) {
+          setLiveSeries(data);
+          setHasCandleError(false);
+        } else {
+          setLiveSeries(null);
+          setHasCandleError(true);
+        }
+      })
+      .catch(() => {
+        if (!isMounted || activeRequestRef.current !== requestId) return;
+        setLiveSeries(null);
+        setHasCandleError(true);
+      })
+      .finally(() => {
+        if (isMounted && activeRequestRef.current === requestId) {
+          setIsCandlesLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [stock.symbol, stock.dataStatus, activeRange]);
+
+  // Deterministic fallback series if provider candles are unavailable or simulated
+  const simulatedSeries = useMemo(() => {
     return generateHistoricalData(stock, activeRange);
   }, [stock, activeRange]);
+
+  const chartSeries = liveSeries || simulatedSeries;
 
   const isPositive = chartSeries.priceChange >= 0;
   const isDark = theme === 'dark';
@@ -187,6 +239,12 @@ export function StockChart({
                 {stock.companyName}
               </span>
               <DataStatusBadge status={chartSeries.dataStatus} />
+              {isCandlesLoading && (
+                <div className="flex items-center gap-1 text-[10px] text-brand-emerald dark:text-emerald-400 font-medium animate-pulse">
+                  <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                  <span>Syncing candles...</span>
+                </div>
+              )}
               {onToggleWatchlist && (
                 <button
                   type="button"
@@ -267,7 +325,17 @@ export function StockChart({
             • High: <span className="tabular-nums font-mono text-slate-600 dark:text-slate-300">{formatCurrency(Math.max(...chartSeries.points.map((p) => p.price)))}</span>
           </div>
           <div>
-            <span>Historical feed generated deterministically from model baseline</span>
+            {liveSeries ? (
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                Provider live candle feed ({chartSeries.points.length} points)
+              </span>
+            ) : hasCandleError ? (
+              <span className="text-amber-600 dark:text-amber-400">
+                Live candles unavailable for this range • Showing simulated baseline
+              </span>
+            ) : (
+              <span>Historical feed generated deterministically from model baseline</span>
+            )}
           </div>
         </div>
       </CardContent>

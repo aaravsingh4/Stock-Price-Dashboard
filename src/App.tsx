@@ -116,6 +116,8 @@ export function AppContent() {
               <section aria-label="Stock Quotes Table">
                 <StockTable
                   stocks={stocks}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
                   onToggleWatchlist={handleToggleWatchlist}
                   onSelectStock={(stock) => setSelectedStock(stock)}
                 />

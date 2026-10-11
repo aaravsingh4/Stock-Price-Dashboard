@@ -10,7 +10,7 @@ export function Card({ children, className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-surface-card dark:bg-surface-darkCard border border-slate-200/80 dark:border-surface-darkBorder rounded-xl shadow-subtle transition-colors duration-150',
+        'bg-surface-card dark:bg-surface-darkCard border border-slate-200/70 dark:border-surface-darkBorder rounded-2xl shadow-card transition-all duration-150',
         className
       )}
       {...props}
@@ -34,7 +34,7 @@ export function CardHeader({ children, className, ...props }: CardProps) {
 export function CardTitle({ children, className, ...props }: CardProps) {
   return (
     <h3
-      className={cn('text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100 uppercase letter-spacing', className)}
+      className={cn('text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100', className)}
       {...props}
     >
       {children}

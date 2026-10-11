@@ -15,21 +15,27 @@ export default {
           600: '#1d4ed8',
           700: '#1e40af',
           900: '#1e3a8a',
+          emerald: '#00b386',
+          emeraldLight: '#ebf9f5',
         },
         market: {
-          up: '#16a34a', // institutional emerald green
-          upBg: '#f0fdf4',
-          upDarkBg: 'rgba(22, 163, 74, 0.15)',
-          down: '#dc2626', // institutional crimson red
+          up: '#00b386', // Groww-inspired institutional mint-emerald
+          upDark: '#00d09c',
+          upBg: '#ebf9f5',
+          upDarkBg: 'rgba(0, 208, 156, 0.12)',
+          down: '#eb5b3c', // Groww-inspired crisp coral red
+          downDark: '#f87171',
           downBg: '#fef2f2',
-          downDarkBg: 'rgba(220, 38, 38, 0.15)',
+          downDarkBg: 'rgba(235, 91, 60, 0.12)',
         },
         surface: {
-          light: '#f8fafc', // slate-50 soft light background
-          card: '#ffffff',
-          darkBg: '#0b0f19', // deep institutional navy/charcoal
-          darkCard: '#111827', // elevated dark surface
-          darkBorder: '#1f2937',
+          light: '#f9fafb', // Soft neutral off-white Groww canvas
+          card: '#ffffff', // Crisp pure white surfaces
+          cardHover: '#f8fafc',
+          darkBg: '#0b0f19', // Deep navy charcoal
+          darkCard: '#121824', // Elevated dark surface
+          darkCardHover: '#182030',
+          darkBorder: '#1e293b',
         }
       },
       fontFamily: {
@@ -37,9 +43,10 @@ export default {
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.07)',
-        'elevated': '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06)',
+        'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03)',
+        'elevated': '0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+        'dropdown': '0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04)',
       }
     },
   },

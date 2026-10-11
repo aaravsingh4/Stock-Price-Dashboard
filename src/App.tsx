@@ -8,7 +8,8 @@ import { SimulationNotice } from './components/dashboard/SimulationNotice';
 import { LoadingState } from './components/ui/LoadingState';
 import { ErrorState } from './components/ui/ErrorState';
 import { EmptyState } from './components/ui/EmptyState';
-import { MarketIndex, MarketOverviewStats, StockQuote } from './types/stock';
+import { MarketIndex, MarketOverviewStats, StockQuote, TimeRange } from './types/stock';
+import { StockChart } from './components/dashboard/StockChart';
 import {
   fetchSimulatedMarketData,
   INITIAL_MARKET_INDICES,
@@ -27,6 +28,8 @@ export function AppContent() {
   const [stocks, setStocks] = useState<StockQuote[]>(INITIAL_STOCKS);
   const [stats, setStats] = useState<MarketOverviewStats>(INITIAL_MARKET_STATS);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
+  const [selectedStockForChart, setSelectedStockForChart] = useState<StockQuote>(INITIAL_STOCKS[0]);
+  const [chartTimeRange, setChartTimeRange] = useState<TimeRange>('1M');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -54,6 +57,14 @@ export function AppContent() {
     setStocks((prev) =>
       prev.map((s) => (s.symbol === symbol ? { ...s, isWatchlisted: !s.isWatchlisted } : s))
     );
+    if (selectedStockForChart.symbol === symbol) {
+      setSelectedStockForChart((prev) => ({ ...prev, isWatchlisted: !prev.isWatchlisted }));
+    }
+  };
+
+  const handleStockSelect = (stock: StockQuote) => {
+    setSelectedStock(stock);
+    setSelectedStockForChart(stock);
   };
 
   return (
@@ -64,7 +75,7 @@ export function AppContent() {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       stocks={stocks}
-      onSelectStock={(stock) => setSelectedStock(stock)}
+      onSelectStock={handleStockSelect}
     >
       {/* Simulation Notice Banner */}
       <SimulationNotice />
@@ -76,10 +87,10 @@ export function AppContent() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Market Overview & Equities
+                Market Overview & Analytics
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Institutional-grade pricing telemetry, benchmark indices, and liquidity telemetry
+                Real-time price discovery, technical charting, and benchmark telemetry
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -107,6 +118,16 @@ export function AppContent() {
                 <MarketOverview indices={indices} />
               </section>
 
+              {/* Main Interactive Historical Stock Chart */}
+              <section aria-label="Interactive Stock Chart">
+                <StockChart
+                  stock={selectedStockForChart}
+                  timeRange={chartTimeRange}
+                  onTimeRangeChange={setChartTimeRange}
+                  onToggleWatchlist={handleToggleWatchlist}
+                />
+              </section>
+
               {/* Market Intelligence Stats Card */}
               <section aria-label="Market Health Stats">
                 <MarketStatsCard stats={stats} />
@@ -119,7 +140,7 @@ export function AppContent() {
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
                   onToggleWatchlist={handleToggleWatchlist}
-                  onSelectStock={(stock) => setSelectedStock(stock)}
+                  onSelectStock={handleStockSelect}
                 />
               </section>
             </>

@@ -208,3 +208,113 @@ export async function fetchSimulatedMarketData(): Promise<{
     stats: INITIAL_MARKET_STATS,
   };
 }
+
+/**
+ * Deterministic pseudo-random helper to ensure identical chart curves across renders
+ */
+function pseudoRandom(seed: number) {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+/**
+ * Generates realistic, deterministic historical price trajectories for any stock and time range
+ */
+export function generateHistoricalData(
+  stock: StockQuote,
+  range: import('../types/stock').TimeRange = '1M'
+): import('../types/stock').StockHistoricalData {
+  const symbolSeed = stock.symbol.split('').reduce((acc, char, idx) => acc + char.charCodeAt(0) * (idx + 1), 0);
+
+  // Time range configurations
+  const rangeConfig: Record<
+    import('../types/stock').TimeRange,
+    { count: number; labels: string[]; driftFactor: number }
+  > = {
+    '1D': {
+      count: 7,
+      labels: ['09:30 AM', '10:30 AM', '11:30 AM', '12:30 PM', '01:30 PM', '02:30 PM', '04:00 PM'],
+      driftFactor: 0.015,
+    },
+    '1W': {
+      count: 5,
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      driftFactor: 0.035,
+    },
+    '1M': {
+      count: 8,
+      labels: ['Week 1', 'Day 8', 'Day 12', 'Week 2', 'Day 18', 'Week 3', 'Day 26', 'Today'],
+      driftFactor: 0.06,
+    },
+    '3M': {
+      count: 7,
+      labels: ['Month -3', 'W2', 'Month -2', 'W6', 'Month -1', 'W10', 'Current'],
+      driftFactor: 0.09,
+    },
+    '6M': {
+      count: 7,
+      labels: ['6M ago', '5M ago', '4M ago', '3M ago', '2M ago', '1M ago', 'Now'],
+      driftFactor: 0.14,
+    },
+    '1Y': {
+      count: 8,
+      labels: ['Oct', 'Dec', 'Feb', 'Apr', 'Jun', 'Aug', 'Sep', 'Oct'],
+      driftFactor: 0.22,
+    },
+    'ALL': {
+      count: 9,
+      labels: ['2021', '2022 Q2', '2022 Q4', '2023 Q2', '2023 Q4', '2024 Q1', '2024 Q2', '2024 Q3', '2024 Q4'],
+      driftFactor: 0.45,
+    },
+  };
+
+  const config = rangeConfig[range];
+  const points: import('../types/stock').HistoricalPricePoint[] = [];
+
+  // Anchor the last point to the actual current stock price
+  const endPrice = stock.price;
+  const isUpTrend = stock.change >= 0;
+
+  // Calculate starting anchor price based on trend and drift
+  const totalChangeRate = (isUpTrend ? 1 : -1) * (Math.abs(stock.changePercent) / 100 + config.driftFactor);
+  const startPrice = Math.max(1, endPrice / (1 + totalChangeRate));
+
+  for (let i = 0; i < config.count; i++) {
+    const progress = i / (config.count - 1);
+    const seed = symbolSeed * 17 + i * 31 + range.charCodeAt(0) * 7;
+    const noise = (pseudoRandom(seed) - 0.5) * (config.driftFactor * 0.4);
+
+    // Linear interpolation from startPrice to endPrice plus noise
+    let price: number;
+    if (i === config.count - 1) {
+      price = endPrice; // Exact current price for the last point
+    } else if (i === 0) {
+      price = Number(startPrice.toFixed(2));
+    } else {
+      const interpolated = startPrice + (endPrice - startPrice) * progress;
+      price = Number((interpolated * (1 + noise)).toFixed(2));
+    }
+
+    points.push({
+      timestamp: new Date(Date.now() - (config.count - 1 - i) * 86400000).toISOString(),
+      label: config.labels[i] || `P${i + 1}`,
+      price,
+      volume: Math.round(stock.volume * (0.8 + pseudoRandom(seed + 99) * 0.4)),
+    });
+  }
+
+  const startingPrice = points[0].price;
+  const priceChange = Number((endPrice - startingPrice).toFixed(2));
+  const percentChange = Number(((priceChange / startingPrice) * 100).toFixed(2));
+
+  return {
+    symbol: stock.symbol,
+    timeRange: range,
+    dataStatus: 'SIMULATED',
+    points,
+    startingPrice,
+    endingPrice: endPrice,
+    priceChange,
+    percentChange,
+  };
+}

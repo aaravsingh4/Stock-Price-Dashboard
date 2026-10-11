@@ -37,3 +37,23 @@ export interface MarketOverviewStats {
   marketSession: string; // e.g. "Regular Trading Hours (NYSE/NASDAQ)"
   lastRefreshed: string;
 }
+
+export type TimeRange = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL';
+
+export interface HistoricalPricePoint {
+  timestamp: string;
+  label: string;
+  price: number;
+  volume?: number;
+}
+
+export interface StockHistoricalData {
+  symbol: string;
+  timeRange: TimeRange;
+  dataStatus: DataStatus;
+  points: HistoricalPricePoint[];
+  startingPrice: number;
+  endingPrice: number;
+  priceChange: number;
+  percentChange: number;
+}

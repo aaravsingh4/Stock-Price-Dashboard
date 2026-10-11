@@ -1,9 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Theme, ThemeContextType } from '../types/theme';
-
-export const THEME_STORAGE_KEY = 'tradepulse_theme';
-
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { useEffect, useState, type ReactNode } from 'react';
+import { Theme } from '../types/theme';
+import { ThemeContext, THEME_STORAGE_KEY } from './themeCore';
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -56,12 +53,4 @@ export function ThemeProvider({
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme(): ThemeContextType {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 }

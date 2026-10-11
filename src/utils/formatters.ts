@@ -62,6 +62,9 @@ export function formatVolume(value: number): string {
 export function formatTimestamp(isoString: string): string {
   try {
     const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',

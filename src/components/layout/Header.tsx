@@ -1,5 +1,5 @@
 import { Activity, Bell, Menu, Moon, Search, Sun, User } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/themeCore';
 import { formatTimestamp } from '../../utils/formatters';
 
 interface HeaderProps {

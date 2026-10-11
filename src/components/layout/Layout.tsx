@@ -1,15 +1,29 @@
 import { useState, type ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { StockQuote } from '../../types/stock';
 
 interface LayoutProps {
   children: ReactNode;
   activeTab: string;
   onSelectTab: (tabId: string) => void;
   lastUpdated?: string;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  stocks?: StockQuote[];
+  onSelectStock?: (stock: StockQuote) => void;
 }
 
-export function Layout({ children, activeTab, onSelectTab, lastUpdated }: LayoutProps) {
+export function Layout({
+  children,
+  activeTab,
+  onSelectTab,
+  lastUpdated,
+  searchQuery,
+  onSearchChange,
+  stocks,
+  onSelectStock,
+}: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -17,32 +31,40 @@ export function Layout({ children, activeTab, onSelectTab, lastUpdated }: Layout
       <Header
         onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         lastUpdated={lastUpdated}
+        activeTab={activeTab}
+        onSelectTab={onSelectTab}
+        searchQuery={searchQuery}
+        onSearchChange={onSearchChange}
+        stocks={stocks}
+        onSelectStock={onSelectStock}
       />
 
-      <div className="flex-1 flex">
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          activeTab={activeTab}
-          onSelectTab={onSelectTab}
-        />
+      {/* Mobile Drawer */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        activeTab={activeTab}
+        onSelectTab={onSelectTab}
+      />
 
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
-          {children}
-        </main>
-      </div>
+      {/* Main Full-Width Dashboard Container */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {children}
+      </main>
 
       {/* Institutional FinTech Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-surface-darkBorder py-4 px-6 text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-surface-darkCard flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-slate-700 dark:text-slate-300">TradePulse Pro</span>
-          <span>•</span>
-          <span>Phase 1 Foundation</span>
-          <span>•</span>
-          <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-medium">SIMULATED FEED</span>
-        </div>
-        <div>
-          <span>Engineered for high performance, reliability, and precision financial analysis.</span>
+      <footer className="border-t border-slate-200/80 dark:border-surface-darkBorder py-5 px-6 text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-surface-darkCard transition-colors">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">TradePulse Pro</span>
+            <span>•</span>
+            <span>Groww-Inspired Clean FinTech Design</span>
+            <span>•</span>
+            <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-medium">SIMULATED DATA</span>
+          </div>
+          <div>
+            <span>Engineered for high performance, reliability, and precision financial analysis.</span>
+          </div>
         </div>
       </footer>
     </div>

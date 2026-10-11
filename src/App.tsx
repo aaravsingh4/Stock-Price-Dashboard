@@ -27,6 +27,7 @@ export function AppContent() {
   const [stocks, setStocks] = useState<StockQuote[]>(INITIAL_STOCKS);
   const [stats, setStats] = useState<MarketOverviewStats>(INITIAL_MARKET_STATS);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -60,6 +61,10 @@ export function AppContent() {
       activeTab={activeTab}
       onSelectTab={setActiveTab}
       lastUpdated={stats.lastRefreshed}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      stocks={stocks}
+      onSelectStock={(stock) => setSelectedStock(stock)}
     >
       {/* Simulation Notice Banner */}
       <SimulationNotice />

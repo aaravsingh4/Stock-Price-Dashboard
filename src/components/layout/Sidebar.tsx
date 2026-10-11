@@ -29,40 +29,38 @@ export function Sidebar({ isOpen, onClose, activeTab, onSelectTab }: SidebarProp
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar container */}
+      {/* Drawer Container */}
       <aside
         className={cn(
-          'fixed lg:sticky top-0 lg:top-16 z-50 lg:z-20 h-screen lg:h-[calc(100vh-4rem)] w-64 bg-white dark:bg-surface-darkCard border-r border-slate-200/80 dark:border-surface-darkBorder transition-transform duration-200 ease-in-out flex flex-col justify-between',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'fixed top-0 bottom-0 left-0 z-50 w-72 bg-white dark:bg-surface-darkCard border-r border-slate-200/80 dark:border-surface-darkBorder transition-transform duration-200 ease-in-out flex flex-col justify-between shadow-dropdown lg:hidden',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="p-4 space-y-6">
-          {/* Mobile close button header */}
-          <div className="flex items-center justify-between lg:hidden pb-3 border-b border-slate-100 dark:border-surface-darkBorder">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Navigation
+        <div className="p-5 space-y-6">
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-surface-darkBorder">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Menu & Navigation
             </span>
             <button
               onClick={onClose}
-              className="p-1 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Close navigation menu"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Navigation Links */}
+          {/* Links */}
           <nav className="space-y-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 mb-2">
-              Market Intelligence
-            </div>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -74,21 +72,14 @@ export function Sidebar({ isOpen, onClose, activeTab, onSelectTab }: SidebarProp
                     onClose();
                   }}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-colors select-none text-left',
+                    'w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all select-none text-left',
                     isActive
-                      ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 font-semibold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60'
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon
-                      className={cn(
-                        'w-4 h-4',
-                        isActive
-                          ? 'text-brand-600 dark:text-brand-400'
-                          : 'text-slate-400 dark:text-slate-500'
-                      )}
-                    />
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4" />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
@@ -102,17 +93,17 @@ export function Sidebar({ isOpen, onClose, activeTab, onSelectTab }: SidebarProp
           </nav>
         </div>
 
-        {/* Footer info in sidebar */}
-        <div className="p-4 border-t border-slate-100 dark:border-surface-darkBorder">
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-surface-darkBorder text-[11px]">
+        {/* Bottom Roadmap Info */}
+        <div className="p-5 border-t border-slate-100 dark:border-surface-darkBorder">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-surface-darkBorder text-[11px]">
             <div className="font-semibold text-slate-800 dark:text-slate-200 mb-1">
-              Architecture Plan
+              TradePulse Architecture
             </div>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-2">
-              Review design boundaries and roadmap in project documentation.
+              Phase 1 foundation active with simulated market feed.
             </p>
-            <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400 font-medium cursor-pointer">
-              <span>View Architecture</span>
+            <div className="flex items-center gap-1 text-brand-emerald font-medium cursor-pointer">
+              <span>View System Docs</span>
               <ExternalLink className="w-3 h-3" />
             </div>
           </div>

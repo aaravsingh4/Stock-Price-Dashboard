@@ -14,6 +14,9 @@ dist-ssr
 *.local
 coverage
 .nyc_output
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 
 # Environment Variables (Keep sensitive keys out of VCS)
 .env

@@ -1,6 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import { env } from './config/env.js';
+import { marketRouter } from './routes/marketRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -24,6 +25,9 @@ export function createApp() {
       uptimeSeconds: Math.floor(process.uptime()),
     });
   });
+
+  // Mount market routes
+  app.use('/api/market', marketRouter);
 
   // Global error handler (Never disclose internal secrets or stack traces in production)
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

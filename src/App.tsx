@@ -10,6 +10,7 @@ import { ErrorState } from './components/ui/ErrorState';
 import { EmptyState } from './components/ui/EmptyState';
 import { MarketIndex, MarketOverviewStats, StockQuote, TimeRange } from './types/stock';
 import { StockChart } from './components/dashboard/StockChart';
+import { MarketMovers } from './components/dashboard/MarketMovers';
 import {
   fetchSimulatedMarketData,
   INITIAL_MARKET_INDICES,
@@ -125,6 +126,14 @@ export function AppContent() {
                   timeRange={chartTimeRange}
                   onTimeRangeChange={setChartTimeRange}
                   onToggleWatchlist={handleToggleWatchlist}
+                />
+              </section>
+
+              {/* Market Movers Panels */}
+              <section aria-label="Market Movers">
+                <MarketMovers
+                  stocks={stocks}
+                  onSelectStock={handleStockSelect}
                 />
               </section>
 

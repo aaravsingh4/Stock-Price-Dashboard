@@ -27,7 +27,11 @@ export function validateQuoteQuery(req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  req.query.symbol = cleanSymbol;
+  Object.defineProperty(req, 'query', {
+    value: { ...req.query, symbol: cleanSymbol },
+    writable: true,
+    configurable: true,
+  });
   next();
 }
 
@@ -66,8 +70,11 @@ export function validateCandlesQuery(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  req.query.symbol = cleanSymbol;
-  req.query.range = cleanRange;
+  Object.defineProperty(req, 'query', {
+    value: { ...req.query, symbol: cleanSymbol, range: cleanRange },
+    writable: true,
+    configurable: true,
+  });
   next();
 }
 
@@ -95,6 +102,10 @@ export function validateSearchQuery(req: Request, res: Response, next: NextFunct
     return;
   }
 
-  req.query.q = cleanQuery;
+  Object.defineProperty(req, 'query', {
+    value: { ...req.query, q: cleanQuery },
+    writable: true,
+    configurable: true,
+  });
   next();
 }

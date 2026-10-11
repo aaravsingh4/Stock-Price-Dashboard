@@ -279,6 +279,8 @@ export function generateHistoricalData(
   const totalChangeRate = (isUpTrend ? 1 : -1) * (Math.abs(stock.changePercent) / 100 + config.driftFactor);
   const startPrice = Math.max(1, endPrice / (1 + totalChangeRate));
 
+  const baseTime = stock.lastUpdated ? new Date(stock.lastUpdated).getTime() : 1728662400000;
+
   for (let i = 0; i < config.count; i++) {
     const progress = i / (config.count - 1);
     const seed = symbolSeed * 17 + i * 31 + range.charCodeAt(0) * 7;
@@ -296,7 +298,7 @@ export function generateHistoricalData(
     }
 
     points.push({
-      timestamp: new Date(Date.now() - (config.count - 1 - i) * 86400000).toISOString(),
+      timestamp: new Date(baseTime - (config.count - 1 - i) * 86400000).toISOString(),
       label: config.labels[i] || `P${i + 1}`,
       price,
       volume: Math.round(stock.volume * (0.8 + pseudoRandom(seed + 99) * 0.4)),

@@ -26,8 +26,15 @@ import { alertService } from './services/alertService';
 import { AlertManager } from './components/alerts/AlertManager';
 import { AlertToastNotification } from './components/alerts/AlertToastNotification';
 import { StockScreenerWorkspace } from './components/screener/StockScreenerWorkspace';
+import { WatchlistWorkspace } from './components/watchlist/WatchlistWorkspace';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/authCore';
+import { AuthModal } from './components/auth/AuthModal';
+import { LocalDataMigrationModal } from './components/auth/LocalDataMigrationModal';
+import { cloudClient } from './services/cloudClient';
 
 export function AppContent() {
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [indices, setIndices] = useState<MarketIndex[]>(INITIAL_MARKET_INDICES);
   const [stocks, setStocks] = useState<StockQuote[]>(INITIAL_STOCKS);
@@ -40,6 +47,8 @@ export function AppContent() {
   const [hasError, setHasError] = useState(false);
   const [isLiveProviderActive, setIsLiveProviderActive] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('demo');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isMigrationModalOpen, setIsMigrationModalOpen] = useState(false);
 
   // Listen to streaming connection status and incoming trade events
   useEffect(() => {
@@ -171,12 +180,36 @@ export function AppContent() {
     loadData();
   }, []);
 
-  const handleToggleWatchlist = (symbol: string) => {
+  const handleToggleWatchlist = async (symbol: string) => {
+    const isCurrentlyWatchlisted = stocks.find((s) => s.symbol === symbol)?.isWatchlisted;
+
     setStocks((prev) =>
       prev.map((s) => (s.symbol === symbol ? { ...s, isWatchlisted: !s.isWatchlisted } : s))
     );
     if (selectedStockForChart.symbol === symbol) {
       setSelectedStockForChart((prev) => ({ ...prev, isWatchlisted: !prev.isWatchlisted }));
+    }
+
+    if (isAuthenticated) {
+      try {
+        const watchlists = await cloudClient.getWatchlists();
+        const defaultList = watchlists.find((w) => w.isDefault) || watchlists[0];
+        if (defaultList) {
+          if (isCurrentlyWatchlisted) {
+            await cloudClient.removeWatchlistSymbol(defaultList.id, symbol);
+          } else {
+            const stock = stocks.find((s) => s.symbol === symbol);
+            await cloudClient.addWatchlistSymbol(
+              defaultList.id,
+              symbol,
+              stock?.companyName || symbol,
+              'US'
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sync watchlist toggle with cloud:', err);
+      }
     }
   };
 
@@ -320,6 +353,8 @@ export function AppContent() {
         <AlertManager
           defaultSymbol={selectedStockForChart?.symbol || 'AAPL'}
           defaultPrice={selectedStockForChart?.price || 180}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenMigrationModal={() => setIsMigrationModalOpen(true)}
         />
       )}
 
@@ -333,12 +368,13 @@ export function AppContent() {
         />
       )}
 
+      {/* Persistent Cloud Watchlists Workspace */}
       {activeTab === 'watchlist' && (
-        <EmptyState
-          title="Persistent Watchlist System"
-          description="Cloud database persistence and customizable user lists are scheduled for Phase 6."
-          actionLabel="Return to Dashboard"
-          onAction={() => setActiveTab('dashboard')}
+        <WatchlistWorkspace
+          allStocks={stocks}
+          onSelectStock={handleStockSelect}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onReturnToDashboard={() => setActiveTab('dashboard')}
         />
       )}
 
@@ -362,6 +398,32 @@ export function AppContent() {
 
       {/* Global In-App Alert Notifications */}
       <AlertToastNotification />
+
+      {/* Authentication and Migration Dialogs */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          // Check if there are local alerts to suggest importing
+          try {
+            const raw = localStorage.getItem('tradepulse_price_alerts_v1');
+            if (raw && JSON.parse(raw).length > 0) {
+              setIsMigrationModalOpen(true);
+            }
+          } catch {
+            // Ignore
+          }
+        }}
+      />
+
+      <LocalDataMigrationModal
+        isOpen={isMigrationModalOpen}
+        onClose={() => setIsMigrationModalOpen(false)}
+        onMigrationComplete={() => {
+          // Keep local as backup
+        }}
+      />
     </Layout>
   );
 }
@@ -369,7 +431,9 @@ export function AppContent() {
 export function App() {
   return (
     <ThemeProvider defaultTheme="light">
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

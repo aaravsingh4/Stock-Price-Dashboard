@@ -22,7 +22,7 @@ export function Sidebar({ isOpen, onClose, activeTab, onSelectTab }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, isReady: true },
     { id: 'explore', label: 'Explore Stocks', icon: Compass, isReady: false, badge: 'Phase 4' },
     { id: 'watchlist', label: 'Watchlist', icon: Star, isReady: false, badge: 'Phase 6' },
-    { id: 'alerts', label: 'Price Alerts', icon: BellRing, isReady: false, badge: 'Phase 7' },
+    { id: 'alerts', label: 'Price Alerts', icon: BellRing, isReady: true },
     { id: 'portfolio', label: 'Portfolio Analytics', icon: PieChart, isReady: false, badge: 'Phase 8' },
     { id: 'settings', label: 'Settings', icon: Settings, isReady: false, badge: 'Planned' },
   ];

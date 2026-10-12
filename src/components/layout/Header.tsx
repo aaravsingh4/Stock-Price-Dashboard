@@ -57,7 +57,7 @@ export function Header({
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'explore', label: 'Explore', icon: Compass, badge: 'Phase 4' },
+    { id: 'explore', label: 'Explore', icon: Compass },
     { id: 'watchlist', label: 'Watchlist', icon: Star, badge: 'Phase 6' },
     { id: 'alerts', label: 'Alerts', icon: BellRing },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, badge: 'Phase 8' },

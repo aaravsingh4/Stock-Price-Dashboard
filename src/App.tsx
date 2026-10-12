@@ -25,6 +25,7 @@ import { marketStreamClient, ConnectionStatus, RealtimeTrade } from './services/
 import { alertService } from './services/alertService';
 import { AlertManager } from './components/alerts/AlertManager';
 import { AlertToastNotification } from './components/alerts/AlertToastNotification';
+import { StockScreenerWorkspace } from './components/screener/StockScreenerWorkspace';
 
 export function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -322,13 +323,13 @@ export function AppContent() {
         />
       )}
 
-      {/* Placeholder states for future phases */}
+      {/* Explore Stocks & Multi-Exchange Screener Workspace */}
       {activeTab === 'explore' && (
-        <EmptyState
-          title="Explore Securities & Technical Screeners"
-          description="Advanced multi-exchange screener and full company fundamentals are scheduled for Phase 4."
-          actionLabel="Return to Dashboard"
-          onAction={() => setActiveTab('dashboard')}
+        <StockScreenerWorkspace
+          initialStocks={stocks}
+          onSelectStock={handleStockSelect}
+          onToggleWatchlist={handleToggleWatchlist}
+          isLiveProviderActive={isLiveProviderActive}
         />
       )}
 

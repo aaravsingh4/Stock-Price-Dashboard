@@ -20,6 +20,7 @@ import { useTheme } from '../../context/themeCore';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { StockQuote } from '../../types/stock';
 import { TrendBadge } from '../ui/Badge';
+import { ConnectionBadge } from '../ui/ConnectionBadge';
 import { cn } from '../../utils/cn';
 import { marketApiClient, LiveSearchResultItem } from '../../services/apiClient';
 
@@ -32,6 +33,7 @@ interface HeaderProps {
   onSearchChange?: (query: string) => void;
   stocks?: StockQuote[];
   onSelectStock?: (stock: StockQuote) => void;
+  connectionStatus?: import('../../services/marketStreamClient').ConnectionStatus;
 }
 
 export function Header({
@@ -43,6 +45,7 @@ export function Header({
   onSearchChange,
   stocks = [],
   onSelectStock,
+  connectionStatus = 'demo',
 }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -56,7 +59,7 @@ export function Header({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'explore', label: 'Explore', icon: Compass, badge: 'Phase 4' },
     { id: 'watchlist', label: 'Watchlist', icon: Star, badge: 'Phase 6' },
-    { id: 'alerts', label: 'Alerts', icon: BellRing, badge: 'Phase 7' },
+    { id: 'alerts', label: 'Alerts', icon: BellRing },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, badge: 'Phase 8' },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -387,6 +390,9 @@ export function Header({
 
           {/* Right Actions: Market Status Pill, Theme Toggle, Profile */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Stream Gateway Connection Badge */}
+            <ConnectionBadge status={connectionStatus} />
+
             {/* Market Status Pill */}
             <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 text-[11px] font-medium text-slate-600 dark:text-slate-300">
               <span className="relative flex h-2 w-2">

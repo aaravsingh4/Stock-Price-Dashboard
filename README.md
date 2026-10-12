@@ -27,6 +27,13 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 
 ## 2. Integrated Features
 
+- [x] **Neon PostgreSQL Cloud Persistence:** Dedicated `tradepulse-dev` branch with copy-on-write database isolation and connection pooling.
+- [x] **Production Database Safety Guard:** Automated check preventing accidental migrations against the `production` branch.
+- [x] **Prisma ORM 6:** Normalized relational schema, typed repositories, and automated migrations.
+- [x] **Secure PostgreSQL Session Authentication:** `bcryptjs` password hashing, sliding-window rate limiting, and cookie session rotation with CSRF mitigation.
+- [x] **Cloud-Backed User Watchlists:** User-isolated watchlists, custom lists, atomic default list provisioning, and compound symbol uniqueness.
+- [x] **Authoritative Server-Side Price Alert Engine:** Background trade evaluation, shared WebSocket multiplexing, automatic reconnection recovery, and exact-once transactional triggers.
+- [x] **Browser Data Migration:** Interactive, idempotent migration dialog transferring local alerts to cloud PostgreSQL.
 - [x] **Express 5 Market Data Gateway:** Node.js + TypeScript gateway with validation middleware, in-memory caching, and request deduplication.
 - [x] **Finnhub Market Data Provider:** Secure upstream adapter authenticating with `X-Finnhub-Token` headers.
 - [x] **Company Profile & Fundamentals API:** Endpoint retrieving genuine exchange, industry, and market capitalization metadata (`/api/market/profile?symbol=AAPL`).
@@ -35,16 +42,7 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - [x] **Side-by-Side Stock Comparison Matrix:** Compare up to 4 securities simultaneously across key financial metrics with honest N/A indicators.
 - [x] **Real-Time Streaming Gateway (`/api/stream`):** Server-multiplexed WebSocket trade streaming service with exponential backoff and subscription pruning.
 - [x] **Dynamic Real-Time Price Discovery:** Incoming live trades automatically refresh selected stock quotes and table telemetry with live badges.
-- [x] **Centralized Price Alerts Engine:** Configurable above/below price thresholds, one-shot trigger evaluation, and in-app toast notifications.
-- [x] **Dedicated Alerts Workspace:** Create, disable, delete, and inspect price alert trigger history with localStorage persistence.
-- [x] **Stock Quote API:** Real-time quote retrieval and normalization (`/api/market/quote?symbol=AAPL`).
-- [x] **Historical Chart Candles API:** OHLCV candle feed supporting `1D`, `1W`, `1M`, `3M`, `6M`, `1Y`, and `ALL` ranges (`/api/market/candles`).
-- [x] **Symbol Autocomplete Search API:** Bounded, debounced symbol and company search (`/api/market/search?q=apple`).
-- [x] **Health Check & Telemetry API:** Endpoint reporting service status, provider configuration, and cache statistics (`/api/health`, `/api/market/status`).
-- [x] **Interactive Historical Stock Chart:** Chart.js line and area charts with multi-timeframe controls, loading states, and live vs. simulated provenance labels.
-- [x] **Equities Watchlist Table & Detail Modal:** Synchronized real-time and cached quotes, interactive sorting, sector filtering, and detailed inspection modal.
-- [x] **Graceful Simulation Demo Mode:** When `FINNHUB_API_KEY` is omitted, the application runs seamlessly in explicitly labeled demo mode without throwing errors.
-- [x] **Comprehensive Test Suite:** 89 automated tests across 16 test suites covering backend validation, provider adapters, WebSocket streaming, caching, screener filtering, comparison matrix, alerts, and UI interactions.
+- [x] **Comprehensive Test Suite:** 100 passing automated tests across 17 test suites including live database integration against Neon PostgreSQL.
 
 ---
 
@@ -57,8 +55,11 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - **Styling:** Tailwind CSS (`darkMode: 'class'`)
 - **Icons:** Lucide React
 
-### Backend
+### Backend & Database
+- **Database:** Neon PostgreSQL (Lakebase OLTP)
+- **ORM:** Prisma 6
 - **Server:** Node.js + Express 5 (TypeScript)
+- **Authentication & Sessions:** `bcryptjs`, `express-session`, `connect-pg-simple`
 - **Runtime:** `tsx` for high-speed TypeScript execution and development watching
 - **Security & Networking:** `cors`, `dotenv`
 - **Data Provider:** Finnhub Stock API (`https://finnhub.io/api/v1`)

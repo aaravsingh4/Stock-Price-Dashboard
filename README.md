@@ -5,7 +5,8 @@
 [![Backend](https://img.shields.io/badge/Node.js-Express%205-green.svg)](https://expressjs.com/)
 [![Market Data](https://img.shields.io/badge/Provider-Finnhub%20API-emerald.svg)](https://finnhub.io/)
 [![Streaming](https://img.shields.io/badge/WebSocket-Real--Time%20Trades-0ea5e9.svg)](/docs/REALTIME_AND_ALERTS.md)
-[![Test Suite](https://img.shields.io/badge/Vitest-76%20Passing-success.svg)](https://vitest.dev/)
+[![Screener](https://img.shields.io/badge/Screener-Multi--Exchange-6366f1.svg)](/docs/SCREENER.md)
+[![Test Suite](https://img.shields.io/badge/Vitest-89%20Passing-success.svg)](https://vitest.dev/)
 [![Theme](https://img.shields.io/badge/Theme-Light%20Default-amber.svg)](#theme-system)
 
 TradePulse Pro is an institutional-grade, full-stack stock market analytics and intelligence platform designed to showcase production-oriented software engineering, clean modular architecture, and financial data integrity.
@@ -19,6 +20,7 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - **Strict Data Transparency:** Every price quote and metric clearly communicates its lifecycle status (`LIVE`, `DELAYED`, `CACHED`, `SIMULATED`, `STALE`, or `UNAVAILABLE`).
 - **Secure Backend Gateway Architecture:** Upstream market provider credentials never touch the browser. A high-performance Express 5 gateway handles rate-limiting, deduplication, caching, validation, and error normalization.
 - **Server-Side WebSocket Multiplexing:** Server gateway connects upstream to Finnhub trades WebSocket and broadcasts to frontend clients via `/api/stream`.
+- **Multi-Exchange Stock Screener:** Flexible multi-parameter filtering, sortable tables, on-demand symbol discovery, and a side-by-side comparison matrix.
 - **Incremental, Atomic Development:** Built with small, verified Git commits adhering to the Conventional Commits specification.
 
 ---
@@ -27,6 +29,10 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 
 - [x] **Express 5 Market Data Gateway:** Node.js + TypeScript gateway with validation middleware, in-memory caching, and request deduplication.
 - [x] **Finnhub Market Data Provider:** Secure upstream adapter authenticating with `X-Finnhub-Token` headers.
+- [x] **Company Profile & Fundamentals API:** Endpoint retrieving genuine exchange, industry, and market capitalization metadata (`/api/market/profile?symbol=AAPL`).
+- [x] **Advanced Explore & Multi-Exchange Screener:** Filter equities by exchange, sector, price range, daily percentage change, volume, and market cap.
+- [x] **Dynamic Security Discovery:** Debounced on-demand symbol discovery fetching quotes and company profiles for any supported ticker.
+- [x] **Side-by-Side Stock Comparison Matrix:** Compare up to 4 securities simultaneously across key financial metrics with honest N/A indicators.
 - [x] **Real-Time Streaming Gateway (`/api/stream`):** Server-multiplexed WebSocket trade streaming service with exponential backoff and subscription pruning.
 - [x] **Dynamic Real-Time Price Discovery:** Incoming live trades automatically refresh selected stock quotes and table telemetry with live badges.
 - [x] **Centralized Price Alerts Engine:** Configurable above/below price thresholds, one-shot trigger evaluation, and in-app toast notifications.
@@ -38,7 +44,7 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - [x] **Interactive Historical Stock Chart:** Chart.js line and area charts with multi-timeframe controls, loading states, and live vs. simulated provenance labels.
 - [x] **Equities Watchlist Table & Detail Modal:** Synchronized real-time and cached quotes, interactive sorting, sector filtering, and detailed inspection modal.
 - [x] **Graceful Simulation Demo Mode:** When `FINNHUB_API_KEY` is omitted, the application runs seamlessly in explicitly labeled demo mode without throwing errors.
-- [x] **Comprehensive Test Suite:** 76 automated tests across 14 test suites covering backend validation, provider adapters, WebSocket streaming, caching, routes, alerts, and UI interactions.
+- [x] **Comprehensive Test Suite:** 89 automated tests across 16 test suites covering backend validation, provider adapters, WebSocket streaming, caching, screener filtering, comparison matrix, alerts, and UI interactions.
 
 ---
 

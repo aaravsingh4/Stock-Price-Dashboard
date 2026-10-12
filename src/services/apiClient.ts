@@ -53,6 +53,17 @@ export interface LiveSearchResultItem {
   displaySymbol: string;
 }
 
+export interface CompanyProfilePayload {
+  symbol: string;
+  name: string;
+  exchange: string;
+  finnhubIndustry: string;
+  marketCapitalization?: number;
+  currency: string;
+  logo?: string;
+  weburl?: string;
+}
+
 function mapStatusToClient(status: string): DataStatus {
   switch (status.toLowerCase()) {
     case 'live':
@@ -151,6 +162,21 @@ class MarketApiClient {
       return (json.data as LiveSearchResultItem[]) || [];
     } catch {
       return [];
+    }
+  }
+
+  /**
+   * Fetch company profile metadata through backend gateway
+   */
+  async fetchProfile(symbol: string): Promise<CompanyProfilePayload | null> {
+    if (!symbol || symbol.trim().length === 0) return null;
+    try {
+      const res = await fetch(`/api/market/profile?symbol=${encodeURIComponent(symbol.trim())}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return (json.data as CompanyProfilePayload) || null;
+    } catch {
+      return null;
     }
   }
 }

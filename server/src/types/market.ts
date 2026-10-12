@@ -48,6 +48,17 @@ export interface NormalizedSearchResult {
   displaySymbol: string;
 }
 
+export interface NormalizedCompanyProfile {
+  symbol: string;
+  name: string;
+  exchange: string;
+  finnhubIndustry: string;
+  marketCapitalization?: number;
+  currency: string;
+  logo?: string;
+  weburl?: string;
+}
+
 export interface NormalizedTradeEvent {
   type: 'trade';
   symbol: string;

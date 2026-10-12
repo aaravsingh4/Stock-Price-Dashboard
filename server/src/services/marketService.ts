@@ -93,6 +93,25 @@ export class MarketService {
     });
   }
 
+  /**
+   * Retrieves company profile metadata with caching
+   */
+  async getProfile(symbol: string): Promise<import('../types/market.js').NormalizedCompanyProfile> {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    const cacheKey = `profile:${cleanSymbol}`;
+    const cached = marketCache.get<import('../types/market.js').NormalizedCompanyProfile>(cacheKey);
+
+    if (cached && !cached.isStale) {
+      return cached.value;
+    }
+
+    return marketCache.deduplicate(cacheKey, async () => {
+      const profile = await finnhubProvider.getProfile(cleanSymbol);
+      marketCache.set(cacheKey, profile, CACHE_TTL.SEARCH); // 1 hour TTL
+      return profile;
+    });
+  }
+
   getProviderStatus() {
     return {
       name: 'finnhub',

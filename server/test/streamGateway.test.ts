@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { StreamGateway } from '../src/services/streamGateway.js';
 import { finnhubWsClient } from '../src/providers/finnhubWsClient.js';
+import { ServerStreamMessage, NormalizedTradeEvent } from '../src/types/market.js';
 import WebSocket from 'ws';
 import http from 'http';
 
@@ -33,13 +34,13 @@ describe('StreamGateway (/api/stream)', () => {
   });
 
   it('accepts client connection and immediately sends status message', async () => {
-    const received: any[] = [];
+    const received: ServerStreamMessage[] = [];
     clientWs = new WebSocket(`ws://127.0.0.1:${port}/api/stream`);
 
     await new Promise<void>((resolve) => {
       clientWs.on('open', () => {
         clientWs.on('message', (data) => {
-          received.push(JSON.parse(data.toString()));
+          received.push(JSON.parse(data.toString()) as ServerStreamMessage);
           resolve();
         });
       });
@@ -47,7 +48,9 @@ describe('StreamGateway (/api/stream)', () => {
 
     expect(received.length).toBeGreaterThan(0);
     expect(received[0].type).toBe('status');
-    expect(received[0].provider).toBe('finnhub');
+    if (received[0].type === 'status') {
+      expect(received[0].provider).toBe('finnhub');
+    }
   });
 
   it('handles client subscription and broadcasts trades to subscribed clients', async () => {
@@ -55,9 +58,9 @@ describe('StreamGateway (/api/stream)', () => {
 
     await new Promise<void>((resolve) => clientWs.on('open', () => resolve()));
 
-    const received: any[] = [];
+    const received: ServerStreamMessage[] = [];
     clientWs.on('message', (data) => {
-      received.push(JSON.parse(data.toString()));
+      received.push(JSON.parse(data.toString()) as ServerStreamMessage);
     });
 
     // Send subscribe
@@ -69,8 +72,8 @@ describe('StreamGateway (/api/stream)', () => {
     expect(received.some((m) => m.type === 'subscribed' && m.symbols.includes('AAPL'))).toBe(true);
 
     // Simulate provider emitting AAPL trade
-    // @ts-ignore - Trigger internal listener
-    finnhubWsClient['tradeListeners'].forEach((listener: any) => {
+    // @ts-expect-error - Trigger internal private trade listener for test
+    finnhubWsClient['tradeListeners'].forEach((listener: (e: NormalizedTradeEvent) => void) => {
       listener({
         type: 'trade',
         symbol: 'AAPL',
@@ -87,17 +90,19 @@ describe('StreamGateway (/api/stream)', () => {
 
     const tradeMsg = received.find((m) => m.type === 'trade');
     expect(tradeMsg).toBeDefined();
-    expect(tradeMsg.data.symbol).toBe('AAPL');
-    expect(tradeMsg.data.price).toBe(182.5);
+    if (tradeMsg && tradeMsg.type === 'trade') {
+      expect(tradeMsg.data.symbol).toBe('AAPL');
+      expect(tradeMsg.data.price).toBe(182.5);
+    }
   });
 
   it('handles client ping with pong', async () => {
     clientWs = new WebSocket(`ws://127.0.0.1:${port}/api/stream`);
     await new Promise<void>((resolve) => clientWs.on('open', () => resolve()));
 
-    const received: any[] = [];
+    const received: ServerStreamMessage[] = [];
     clientWs.on('message', (data) => {
-      received.push(JSON.parse(data.toString()));
+      received.push(JSON.parse(data.toString()) as ServerStreamMessage);
     });
 
     clientWs.send(JSON.stringify({ action: 'ping' }));

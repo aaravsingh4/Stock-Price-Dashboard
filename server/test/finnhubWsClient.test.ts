@@ -6,25 +6,41 @@ import WebSocket from 'ws';
 // Mock ws
 vi.mock('ws');
 
+interface MockWebSocketInstance {
+  readyState: number;
+  on: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+  close: ReturnType<typeof vi.fn>;
+  ping: ReturnType<typeof vi.fn>;
+}
+
 describe('FinnhubWsClient (Upstream Provider)', () => {
   let client: FinnhubWsClient;
-  let mockWsInstance: any;
+  let mockWsInstance: MockWebSocketInstance;
 
   beforeEach(() => {
     (env as unknown as { finnhubApiKey: string }).finnhubApiKey = 'test_token_123';
     
     mockWsInstance = {
-      readyState: WebSocket.OPEN,
+      readyState: 1, // WebSocket.OPEN
       on: vi.fn(),
       send: vi.fn(),
       close: vi.fn(),
       ping: vi.fn(),
     };
 
-    (WebSocket as unknown as any).OPEN = 1;
-    (WebSocket as unknown as any).CONNECTING = 0;
-    (WebSocket as unknown as any).CLOSED = 3;
-    (WebSocket as unknown as any).mockImplementation(() => mockWsInstance);
+    const MockWsClass = WebSocket as unknown as {
+      OPEN: number;
+      CONNECTING: number;
+      CLOSED: number;
+      mockImplementation: (fn: () => MockWebSocketInstance) => void;
+      mock: { calls: Array<[string]> };
+    };
+
+    MockWsClass.OPEN = 1;
+    MockWsClass.CONNECTING = 0;
+    MockWsClass.CLOSED = 3;
+    MockWsClass.mockImplementation(() => mockWsInstance);
 
     client = new FinnhubWsClient();
   });
@@ -38,13 +54,14 @@ describe('FinnhubWsClient (Upstream Provider)', () => {
     client.subscribe('AAPL');
 
     expect(WebSocket).toHaveBeenCalled();
-    const calledUrl = (WebSocket as unknown as any).mock.calls[0][0];
+    const calledUrl = (WebSocket as unknown as { mock: { calls: Array<[string]> } }).mock.calls[0][0];
     expect(calledUrl).toContain('wss://ws.finnhub.io?token=test_token_123');
 
     // Trigger open event
-    const openCallback = mockWsInstance.on.mock.calls.find((c: any) => c[0] === 'open')?.[1];
+    const calls = mockWsInstance.on.mock.calls as Array<[string, () => void]>;
+    const openCallback = calls.find((c) => c[0] === 'open')?.[1];
     expect(openCallback).toBeDefined();
-    openCallback();
+    openCallback?.();
 
     expect(mockWsInstance.send).toHaveBeenCalledWith(
       JSON.stringify({ type: 'subscribe', symbol: 'AAPL' })
@@ -57,7 +74,8 @@ describe('FinnhubWsClient (Upstream Provider)', () => {
     client.subscribe('AAPL');
 
     // Find message handler
-    const messageCallback = mockWsInstance.on.mock.calls.find((c: any) => c[0] === 'message')?.[1];
+    const calls = mockWsInstance.on.mock.calls as Array<[string, (data: Buffer) => void]>;
+    const messageCallback = calls.find((c) => c[0] === 'message')?.[1];
     expect(messageCallback).toBeDefined();
 
     const rawMessage = JSON.stringify({
@@ -73,7 +91,7 @@ describe('FinnhubWsClient (Upstream Provider)', () => {
       ],
     });
 
-    messageCallback(Buffer.from(rawMessage));
+    messageCallback?.(Buffer.from(rawMessage));
 
     expect(tradeCallback).toHaveBeenCalledTimes(1);
     const event = tradeCallback.mock.calls[0][0];
@@ -92,21 +110,23 @@ describe('FinnhubWsClient (Upstream Provider)', () => {
     client.onTrade(tradeCallback);
     client.subscribe('AAPL');
 
-    const messageCallback = mockWsInstance.on.mock.calls.find((c: any) => c[0] === 'message')?.[1];
+    const calls = mockWsInstance.on.mock.calls as Array<[string, (data: Buffer) => void]>;
+    const messageCallback = calls.find((c) => c[0] === 'message')?.[1];
     expect(messageCallback).toBeDefined();
 
     // Invalid JSON
-    messageCallback(Buffer.from('{invalid: json'));
+    messageCallback?.(Buffer.from('{invalid: json'));
     // Missing required price
-    messageCallback(Buffer.from(JSON.stringify({ type: 'trade', data: [{ s: 'AAPL' }] })));
+    messageCallback?.(Buffer.from(JSON.stringify({ type: 'trade', data: [{ s: 'AAPL' }] })));
 
     expect(tradeCallback).not.toHaveBeenCalled();
   });
 
   it('unsubscribes from symbol when requested', () => {
     client.subscribe('AAPL');
-    const openCallback = mockWsInstance.on.mock.calls.find((c: any) => c[0] === 'open')?.[1];
-    openCallback();
+    const calls = mockWsInstance.on.mock.calls as Array<[string, () => void]>;
+    const openCallback = calls.find((c) => c[0] === 'open')?.[1];
+    openCallback?.();
 
     client.unsubscribe('AAPL');
     expect(mockWsInstance.send).toHaveBeenCalledWith(

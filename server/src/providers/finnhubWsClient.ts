@@ -118,7 +118,7 @@ export class FinnhubWsClient {
         console.error('[FinnhubWsClient] Upstream WebSocket error:', err.message);
       });
 
-      this.ws.on('close', (code: number) => {
+      this.ws.on('close', (_code: number) => {
         this.isConnecting = false;
         if (this.pingInterval) {
           clearInterval(this.pingInterval);

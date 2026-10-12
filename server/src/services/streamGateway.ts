@@ -6,7 +6,6 @@ import {
   ServerStreamMessage,
   NormalizedTradeEvent,
 } from '../types/market.js';
-import { env } from '../config/env.js';
 
 interface ClientState {
   ws: WebSocket;

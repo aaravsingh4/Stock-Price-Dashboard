@@ -48,6 +48,31 @@ export interface NormalizedSearchResult {
   displaySymbol: string;
 }
 
+export interface NormalizedTradeEvent {
+  type: 'trade';
+  symbol: string;
+  price: number;
+  timestamp: string;
+  providerTimestamp: number;
+  volume: number;
+  conditions?: string[];
+  provider: 'finnhub' | 'simulated';
+  dataStatus: MarketDataStatus;
+}
+
+export type ClientStreamMessage =
+  | { action: 'subscribe'; symbols: string[] }
+  | { action: 'unsubscribe'; symbols: string[] }
+  | { action: 'ping' };
+
+export type ServerStreamMessage =
+  | { type: 'trade'; data: NormalizedTradeEvent }
+  | { type: 'subscribed'; symbols: string[] }
+  | { type: 'unsubscribed'; symbols: string[] }
+  | { type: 'pong' }
+  | { type: 'status'; provider: 'finnhub' | 'simulated'; connected: boolean; streamingAvailable: boolean }
+  | { type: 'error'; message: string; code?: string };
+
 export class MarketProviderError extends Error {
   status: number;
   code: string;
@@ -61,3 +86,4 @@ export class MarketProviderError extends Error {
     this.isRateLimit = status === 429;
   }
 }
+

@@ -22,6 +22,10 @@ export function createApp() {
         configured: env.isFinnhubConfigured,
         mode: env.isFinnhubConfigured ? 'provider' : 'demo-fallback',
       },
+      database: {
+        provider: 'neon-postgres',
+        configured: env.isDatabaseConfigured,
+      },
       uptimeSeconds: Math.floor(process.uptime()),
     });
   });

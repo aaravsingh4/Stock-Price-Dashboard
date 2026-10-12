@@ -1,0 +1,128 @@
+// prisma/schema.prisma
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// Core User & Authentication
+// -------------------------------------------------------------
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  watchlists   Watchlist[]
+  alerts       PriceAlert[]
+  alertHistory PriceAlertHistory[]
+
+  @@map("users")
+}
+
+// -------------------------------------------------------------
+// Watchlists & Watchlist Items
+// -------------------------------------------------------------
+model Watchlist {
+  id          String          @id @default(uuid())
+  userId      String          @map("user_id")
+  name        String
+  isDefault   Boolean         @default(false) @map("is_default")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       WatchlistItem[]
+
+  @@index([userId])
+  @@map("watchlists")
+}
+
+model WatchlistItem {
+  id          String    @id @default(uuid())
+  watchlistId String    @map("watchlist_id")
+  symbol      String
+  name        String?
+  exchange    String?
+  addedAt     DateTime  @default(now()) @map("added_at")
+
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, symbol])
+  @@index([watchlistId])
+  @@index([symbol])
+  @@map("watchlist_items")
+}
+
+// -------------------------------------------------------------
+// Price Alerts & Trigger History
+// -------------------------------------------------------------
+enum AlertCondition {
+  ABOVE
+  BELOW
+}
+
+enum AlertStatus {
+  ACTIVE
+  TRIGGERED
+  DISABLED
+}
+
+model PriceAlert {
+  id            String         @id @default(uuid())
+  userId        String         @map("user_id")
+  symbol        String
+  condition     AlertCondition
+  targetPrice   Decimal        @map("target_price") @db.Decimal(14, 4)
+  status        AlertStatus    @default(ACTIVE)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  triggeredAt   DateTime?      @map("triggered_at")
+  triggeredPrice Decimal?      @map("triggered_price") @db.Decimal(14, 4)
+  eventTime     DateTime?      @map("event_time")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history       PriceAlertHistory[]
+
+  @@index([userId, status])
+  @@index([symbol, status])
+  @@map("price_alerts")
+}
+
+model PriceAlertHistory {
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  alertId        String?        @map("alert_id")
+  symbol         String
+  condition      AlertCondition
+  targetPrice    Decimal        @map("target_price") @db.Decimal(14, 4)
+  observedPrice  Decimal        @map("observed_price") @db.Decimal(14, 4)
+  eventTime      DateTime?      @map("event_time")
+  triggeredAt    DateTime       @default(now()) @map("triggered_at")
+  dedupId        String         @unique @map("dedup_id")
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alert          PriceAlert?    @relation(fields: [alertId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([alertId])
+  @@index([symbol])
+  @@map("price_alert_history")
+}
+
+// -------------------------------------------------------------
+// Express Session Store (connect-pg-simple)
+// -------------------------------------------------------------
+model Session {
+  sid    String   @id @db.VarChar(255)
+  sess   Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire])
+  @@map("session")
+}

@@ -15,8 +15,10 @@ import {
   BellRing,
   Settings,
   Loader2,
+  LogOut,
 } from 'lucide-react';
 import { useTheme } from '../../context/themeCore';
+import { useAuth } from '../../context/authCore';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { StockQuote } from '../../types/stock';
 import { TrendBadge } from '../ui/Badge';
@@ -34,6 +36,7 @@ interface HeaderProps {
   stocks?: StockQuote[];
   onSelectStock?: (stock: StockQuote) => void;
   connectionStatus?: import('../../services/marketStreamClient').ConnectionStatus;
+  onOpenAuthModal?: () => void;
 }
 
 export function Header({
@@ -46,8 +49,10 @@ export function Header({
   stocks = [],
   onSelectStock,
   connectionStatus = 'demo',
+  onOpenAuthModal,
 }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<LiveSearchResultItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -58,7 +63,7 @@ export function Header({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'explore', label: 'Explore', icon: Compass },
-    { id: 'watchlist', label: 'Watchlist', icon: Star, badge: 'Phase 6' },
+    { id: 'watchlist', label: 'Watchlist', icon: Star },
     { id: 'alerts', label: 'Alerts', icon: BellRing },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart, badge: 'Phase 8' },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -428,11 +433,35 @@ export function Header({
               <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-brand-emerald" />
             </button>
 
-            {/* Profile Avatar */}
+            {/* Profile Avatar & Auth Status */}
             <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-surface-darkBorder">
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 font-semibold text-xs select-none">
-                <User className="w-4 h-4" />
-              </div>
+              {isAuthenticated && user ? (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-full bg-brand-emerald/10 text-brand-emerald border border-brand-emerald/20 flex items-center justify-center font-bold text-xs select-none"
+                    title={`Signed in as ${user.email}`}
+                  >
+                    {user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <button
+                    onClick={() => logout()}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Sign Out"
+                    aria-label="Sign Out"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenAuthModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-opacity"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

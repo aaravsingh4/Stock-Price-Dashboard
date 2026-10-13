@@ -1,5 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
 import { env } from './config/env.js';
 import { sessionMiddleware } from './middleware/session.js';
 import { marketRouter } from './routes/marketRoutes.js';
@@ -58,6 +60,36 @@ export function createApp() {
   app.use('/api/watchlists', watchlistRouter);
   app.use('/api/alerts', alertRouter);
   app.use('/api/migrate', migrationRouter);
+
+  // Return proper 404 for unknown /api/* requests
+  app.all('/api/*', (_req: Request, res: Response) => {
+    res.status(404).json({
+      error: {
+        message: 'API endpoint not found',
+        code: 'NOT_FOUND',
+      },
+    });
+  });
+
+  // Serve compiled production frontend if dist directory exists
+  const clientDistPath = path.resolve(process.cwd(), 'dist');
+  if (fs.existsSync(clientDistPath)) {
+    app.use(express.static(clientDistPath));
+
+    // React Single-Page Application (SPA) fallback
+    app.get('*', (req: Request, res: Response, next: NextFunction) => {
+      // Do not intercept API requests
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      const indexPath = path.join(clientDistPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        next();
+      }
+    });
+  }
 
   // Global error handler (Never disclose internal secrets or stack traces in production)
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

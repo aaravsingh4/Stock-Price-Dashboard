@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: tradepulse-pro
+    runtime: node
+    plan: starter
+    region: ohio
+    buildCommand: npm ci && npm run db:generate && npm run build
+    startCommand: npm run start:server
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FINNHUB_API_KEY
+        sync: false

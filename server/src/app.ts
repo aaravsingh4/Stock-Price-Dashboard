@@ -62,7 +62,7 @@ export function createApp() {
   app.use('/api/migrate', migrationRouter);
 
   // Return proper 404 for unknown /api/* requests
-  app.all('/api/*', (_req: Request, res: Response) => {
+  app.all('/api/{*splat}', (_req: Request, res: Response) => {
     res.status(404).json({
       error: {
         message: 'API endpoint not found',
@@ -77,7 +77,7 @@ export function createApp() {
     app.use(express.static(clientDistPath));
 
     // React Single-Page Application (SPA) fallback
-    app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
       // Do not intercept API requests
       if (req.path.startsWith('/api')) {
         return next();

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { AuthService } from '../src/services/authService.js';
-import { WatchlistRepository } from '../src/repositories/watchlistRepository.js';
 
 describe('End-to-End Journey A: Authentication & Session Lifecycle', () => {
   const app = createApp();

@@ -118,6 +118,7 @@ describe('End-to-End Journey D: Local Data Migration & Idempotence', () => {
     await waitFor(() => {
       expect(screen.getByText(/Migration Completed Successfully!/i)).toBeInTheDocument();
       expect(screen.getByText(/Alerts Imported: 1/i)).toBeInTheDocument();
+      expect(migrateSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

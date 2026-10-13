@@ -100,7 +100,7 @@ describe('End-to-End Journey C: Price Alerts & Exact-Once Trigger Lifecycle', ()
     expect(testCloudAlertService.isSymbolMonitored('TSLA')).toBe(true);
 
     // Track emitted notifications
-    const emittedNotifications: any[] = [];
+    const emittedNotifications: import('../src/services/cloudAlertService.js').AlertTriggerNotification[] = [];
     testCloudAlertService.on('alert_triggered', (notif) => emittedNotifications.push(notif));
 
     // Simulated trade 1: TSLA at 245.00 (below 250, above 200 -> neither triggers)
@@ -161,7 +161,7 @@ describe('End-to-End Journey C: Price Alerts & Exact-Once Trigger Lifecycle', ()
     // 9 & 10. Duplicate/replayed trade events do NOT trigger again (idempotent atomic rejection)
     vi.spyOn(AlertRepository, 'triggerAlertTransaction').mockResolvedValue(null); // Already triggered returns null
 
-    const duplicateEmitted: any[] = [];
+    const duplicateEmitted: import('../src/services/cloudAlertService.js').AlertTriggerNotification[] = [];
     restartedService.on('alert_triggered', (notif) => duplicateEmitted.push(notif));
 
     await restartedService.evaluateTrade({

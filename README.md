@@ -4,8 +4,9 @@
 [![UI Framework](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev/)
 [![Backend](https://img.shields.io/badge/Node.js-Express%205-green.svg)](https://expressjs.com/)
 [![Market Data](https://img.shields.io/badge/Provider-Finnhub%20API-emerald.svg)](https://finnhub.io/)
-[![Styling](https://img.shields.io/badge/TailwindCSS-v3.4-38bdf8.svg)](https://tailwindcss.com/)
-[![Test Suite](https://img.shields.io/badge/Vitest-65%20Passing-success.svg)](https://vitest.dev/)
+[![Streaming](https://img.shields.io/badge/WebSocket-Real--Time%20Trades-0ea5e9.svg)](/docs/REALTIME_AND_ALERTS.md)
+[![Screener](https://img.shields.io/badge/Screener-Multi--Exchange-6366f1.svg)](/docs/SCREENER.md)
+[![Test Suite](https://img.shields.io/badge/Vitest-89%20Passing-success.svg)](https://vitest.dev/)
 [![Theme](https://img.shields.io/badge/Theme-Light%20Default-amber.svg)](#theme-system)
 
 TradePulse Pro is an institutional-grade, full-stack stock market analytics and intelligence platform designed to showcase production-oriented software engineering, clean modular architecture, and financial data integrity.
@@ -18,22 +19,30 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - **Light-Mode-First Design Philosophy:** Institutional FinTech interfaces default to high-contrast, clean light palettes for daytime trading efficiency. Dark mode is available as a secondary, persistent user preference.
 - **Strict Data Transparency:** Every price quote and metric clearly communicates its lifecycle status (`LIVE`, `DELAYED`, `CACHED`, `SIMULATED`, `STALE`, or `UNAVAILABLE`).
 - **Secure Backend Gateway Architecture:** Upstream market provider credentials never touch the browser. A high-performance Express 5 gateway handles rate-limiting, deduplication, caching, validation, and error normalization.
+- **Server-Side WebSocket Multiplexing:** Server gateway connects upstream to Finnhub trades WebSocket and broadcasts to frontend clients via `/api/stream`.
+- **Multi-Exchange Stock Screener:** Flexible multi-parameter filtering, sortable tables, on-demand symbol discovery, and a side-by-side comparison matrix.
 - **Incremental, Atomic Development:** Built with small, verified Git commits adhering to the Conventional Commits specification.
 
 ---
 
 ## 2. Integrated Features
 
+- [x] **Neon PostgreSQL Cloud Persistence:** Dedicated `tradepulse-dev` branch with copy-on-write database isolation and connection pooling.
+- [x] **Production Database Safety Guard:** Automated check preventing accidental migrations against the `production` branch.
+- [x] **Prisma ORM 6:** Normalized relational schema, typed repositories, and automated migrations.
+- [x] **Secure PostgreSQL Session Authentication:** `bcryptjs` password hashing, sliding-window rate limiting, and cookie session rotation with CSRF mitigation.
+- [x] **Cloud-Backed User Watchlists:** User-isolated watchlists, custom lists, atomic default list provisioning, and compound symbol uniqueness.
+- [x] **Authoritative Server-Side Price Alert Engine:** Background trade evaluation, shared WebSocket multiplexing, automatic reconnection recovery, and exact-once transactional triggers.
+- [x] **Browser Data Migration:** Interactive, idempotent migration dialog transferring local alerts to cloud PostgreSQL.
 - [x] **Express 5 Market Data Gateway:** Node.js + TypeScript gateway with validation middleware, in-memory caching, and request deduplication.
 - [x] **Finnhub Market Data Provider:** Secure upstream adapter authenticating with `X-Finnhub-Token` headers.
-- [x] **Stock Quote API:** Real-time quote retrieval and normalization (`/api/market/quote?symbol=AAPL`).
-- [x] **Historical Chart Candles API:** OHLCV candle feed supporting `1D`, `1W`, `1M`, `3M`, `6M`, `1Y`, and `ALL` ranges (`/api/market/candles`).
-- [x] **Symbol Autocomplete Search API:** Bounded, debounced symbol and company search (`/api/market/search?q=apple`).
-- [x] **Health Check & Telemetry API:** Endpoint reporting service status, provider configuration, and cache statistics (`/api/health`, `/api/market/status`).
-- [x] **Interactive Historical Stock Chart:** Chart.js line and area charts with multi-timeframe controls, loading states, and live vs. simulated provenance labels.
-- [x] **Equities Watchlist Table & Detail Modal:** Synchronized real-time and cached quotes, interactive sorting, sector filtering, and detailed inspection modal.
-- [x] **Graceful Simulation Demo Mode:** When `FINNHUB_API_KEY` is omitted, the application runs seamlessly in explicitly labeled demo mode without throwing errors.
-- [x] **Comprehensive Test Suite:** 65 automated tests across 11 test suites covering backend validation, provider adapters, caching, routes, formatters, and UI interactions.
+- [x] **Company Profile & Fundamentals API:** Endpoint retrieving genuine exchange, industry, and market capitalization metadata (`/api/market/profile?symbol=AAPL`).
+- [x] **Advanced Explore & Multi-Exchange Screener:** Filter equities by exchange, sector, price range, daily percentage change, volume, and market cap.
+- [x] **Dynamic Security Discovery:** Debounced on-demand symbol discovery fetching quotes and company profiles for any supported ticker.
+- [x] **Side-by-Side Stock Comparison Matrix:** Compare up to 4 securities simultaneously across key financial metrics with honest N/A indicators.
+- [x] **Real-Time Streaming Gateway (`/api/stream`):** Server-multiplexed WebSocket trade streaming service with exponential backoff and subscription pruning.
+- [x] **Dynamic Real-Time Price Discovery:** Incoming live trades automatically refresh selected stock quotes and table telemetry with live badges.
+- [x] **Comprehensive Test Suite:** 100 passing automated tests across 17 test suites including live database integration against Neon PostgreSQL.
 
 ---
 
@@ -46,8 +55,11 @@ TradePulse Pro bridges the gap between basic stock price tickers and professiona
 - **Styling:** Tailwind CSS (`darkMode: 'class'`)
 - **Icons:** Lucide React
 
-### Backend
+### Backend & Database
+- **Database:** Neon PostgreSQL (Lakebase OLTP)
+- **ORM:** Prisma 6
 - **Server:** Node.js + Express 5 (TypeScript)
+- **Authentication & Sessions:** `bcryptjs`, `express-session`, `connect-pg-simple`
 - **Runtime:** `tsx` for high-speed TypeScript execution and development watching
 - **Security & Networking:** `cors`, `dotenv`
 - **Data Provider:** Finnhub Stock API (`https://finnhub.io/api/v1`)

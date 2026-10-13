@@ -137,4 +137,24 @@ describe('Market API Express Endpoints', () => {
       expect(res.body.data.cacheStats).toBeDefined();
     });
   });
+
+  describe('GET /api/market/profile', () => {
+    it('returns normalized company profile for valid symbol', async () => {
+      vi.spyOn(finnhubProvider, 'getProfile').mockResolvedValue({
+        symbol: 'AAPL',
+        name: 'Apple Inc',
+        exchange: 'NASDAQ',
+        finnhubIndustry: 'Technology',
+        marketCapitalization: 3000000,
+        currency: 'USD',
+      });
+
+      const res = await request(app).get('/api/market/profile?symbol=AAPL');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.symbol).toBe('AAPL');
+      expect(res.body.data.exchange).toBe('NASDAQ');
+      expect(res.body.data.finnhubIndustry).toBe('Technology');
+    });
+  });
 });

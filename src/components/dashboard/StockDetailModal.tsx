@@ -11,6 +11,7 @@ import {
   formatPercent,
   formatVolume,
 } from '../../utils/formatters';
+import { alertService } from '../../services/alertService';
 import { cn } from '../../utils/cn';
 
 interface StockDetailModalProps {
@@ -218,6 +219,17 @@ export function StockDetailModal({
               <span>Simulated baseline model parameters</span>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  alertService.createAlert(stock.symbol, stock.price, 'ABOVE', 'Quick alert from detail modal');
+                  alert(`Alert configured for ${stock.symbol} at $${stock.price.toFixed(2)}`);
+                }}
+                className="text-xs"
+              >
+                Set Alert
+              </Button>
               <Button
                 variant={stock.isWatchlisted ? 'outline' : 'primary'}
                 size="sm"

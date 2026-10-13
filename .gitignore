@@ -43,3 +43,4 @@ vite.config.js
 .vite
 tmp/
 scratch/
+.neon

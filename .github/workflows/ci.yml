@@ -1,0 +1,49 @@
+name: TradePulse Pro CI - Quality & Security Verification
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    name: Lint, Typecheck, Unit/E2E Tests, and Production Build
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      SESSION_SECRET: ci-temporary-verification-session-secret-key-32chars
+      # Mock Finnhub / Database variables to prevent live network egress during PR CI
+      FINNHUB_API_KEY: ""
+      DATABASE_URL: ""
+      DIRECT_URL: ""
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Static Lint Check
+        run: npm run lint
+
+      - name: Static TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Automated Unit & End-to-End Test Suite
+        run: npm test
+
+      - name: Production Bundle Build Verification
+        run: npm run build

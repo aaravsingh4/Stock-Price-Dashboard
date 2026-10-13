@@ -12,6 +12,8 @@ interface LayoutProps {
   onSearchChange?: (query: string) => void;
   stocks?: StockQuote[];
   onSelectStock?: (stock: StockQuote) => void;
+  connectionStatus?: import('../../services/marketStreamClient').ConnectionStatus;
+  onOpenAuthModal?: () => void;
 }
 
 export function Layout({
@@ -23,6 +25,8 @@ export function Layout({
   onSearchChange,
   stocks,
   onSelectStock,
+  connectionStatus,
+  onOpenAuthModal,
 }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -37,6 +41,8 @@ export function Layout({
         onSearchChange={onSearchChange}
         stocks={stocks}
         onSelectStock={onSelectStock}
+        connectionStatus={connectionStatus}
+        onOpenAuthModal={onOpenAuthModal}
       />
 
       {/* Mobile Drawer */}

@@ -269,6 +269,34 @@ export class FinnhubProvider {
         displaySymbol: r.displaySymbol,
       }));
   }
+
+  /**
+   * Fetch company profile metadata (exchange, industry, marketCap)
+   */
+  async getProfile(symbol: string): Promise<import('../types/market.js').NormalizedCompanyProfile> {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    const raw = await this.fetchUpstream<{
+      ticker?: string;
+      name?: string;
+      exchange?: string;
+      finnhubIndustry?: string;
+      marketCapitalization?: number;
+      currency?: string;
+      logo?: string;
+      weburl?: string;
+    }>('/stock/profile2', { symbol: cleanSymbol });
+
+    return {
+      symbol: cleanSymbol,
+      name: raw.name || cleanSymbol,
+      exchange: raw.exchange || 'US',
+      finnhubIndustry: raw.finnhubIndustry || 'General',
+      marketCapitalization: typeof raw.marketCapitalization === 'number' ? raw.marketCapitalization : undefined,
+      currency: raw.currency || 'USD',
+      logo: raw.logo,
+      weburl: raw.weburl,
+    };
+  }
 }
 
 export const finnhubProvider = new FinnhubProvider();

@@ -88,17 +88,23 @@ describe('Dashboard Interactions & Chart Integration', () => {
     expect(within(chartSection).getByText(/Range Window:/i)).toHaveTextContent('1Y');
   });
 
-  it('switches navigation tabs and shows milestone notice, with return action', async () => {
+  it('switches navigation tabs and shows screener workspace and milestone notices', async () => {
     render(<App />);
 
     await screen.findByText('Market Overview & Analytics');
 
-    // Click Explore in navigation (Header nav)
+    // Click Explore in navigation (Header nav) -> Now activates Explore Stocks screener
     const exploreTabs = screen.getAllByRole('button', { name: /Explore/i });
     fireEvent.click(exploreTabs[0]);
 
-    expect(screen.getByText('Explore Securities & Technical Screeners')).toBeInTheDocument();
-    expect(screen.getByText(/scheduled for Phase 4/i)).toBeInTheDocument();
+    expect(screen.getByText('Explore Stocks & Multi-Exchange Screener')).toBeInTheDocument();
+
+    // Click Watchlist tab which displays milestone empty state
+    const watchlistTabs = screen.getAllByRole('button', { name: /Watchlist/i });
+    fireEvent.click(watchlistTabs[0]);
+
+    expect(screen.getByText('Persistent Watchlist System')).toBeInTheDocument();
+    expect(screen.getByText(/scheduled for Phase 6/i)).toBeInTheDocument();
 
     // Click return to dashboard
     const returnBtn = screen.getByRole('button', { name: /Return to Dashboard/i });

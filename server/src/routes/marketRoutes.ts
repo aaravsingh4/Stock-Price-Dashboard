@@ -92,6 +92,33 @@ marketRouter.get(
 );
 
 /**
+ * GET /api/market/profile?symbol=AAPL
+ */
+marketRouter.get(
+  '/profile',
+  validateQuoteQuery,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const symbol = req.query.symbol as string;
+      const profile = await marketService.getProfile(symbol);
+      res.json({ data: profile });
+    } catch (err: unknown) {
+      if (err instanceof MarketProviderError) {
+        res.status(err.status).json({
+          error: {
+            message: err.message,
+            code: err.code,
+            isRateLimit: err.isRateLimit,
+          },
+        });
+        return;
+      }
+      next(err);
+    }
+  }
+);
+
+/**
  * GET /api/market/status
  */
 marketRouter.get('/status', (_req: Request, res: Response): void => {
